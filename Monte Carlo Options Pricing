@@ -1,0 +1,44 @@
+import numpy as np
+
+def monte_carlo_option_pricing(S0, K, T, r, sigma, n_simulations=100000, n_steps=252):
+    """
+    Monte Carlo pricing of a European call option using Geometric Brownian Motion.
+    
+    Parameters:
+    S0 : float - Initial stock price
+    K : float - Strike price
+    T : float - Time to maturity (in years)
+    r : float - Risk-free interest rate (annualized)
+    sigma : float - Volatility (annualized)
+    n_simulations : int - Number of simulated paths
+    n_steps : int - Number of time steps per path
+    
+    Returns:
+    option_price : float - Estimated option price
+    """
+    dt = T / n_steps  # time step size
+    # Simulate random shocks: Z ~ N(0,1)
+    Z = np.random.normal(size=(n_simulations, n_steps))
+    # Generate paths using GBM formula
+    increments = (r - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z
+    log_paths = np.cumsum(increments, axis=1)
+    S_paths = S0 * np.exp(log_paths)
+    
+    # Terminal stock prices
+    S_T = S_paths[:, -1]
+    # Payoffs for European call
+    payoffs = np.maximum(S_T - K, 0)
+    # Discount to present
+    discounted_payoffs = np.exp(-r * T) * payoffs
+    # Monte Carlo estimate
+    return np.mean(discounted_payoffs)
+
+# Example parameters
+S0 = 100    # initial stock price
+K = 100     # strike price
+T = 1.0     # maturity in years
+r = 0.05    # risk-free rate (5%)
+sigma = 0.2 # volatility (20%)
+
+price_estimate = monte_carlo_option_pricing(S0, K, T, r, sigma)
+price_estimate
